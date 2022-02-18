@@ -1,0 +1,68 @@
+
+
+// Action Function //
+function main() {
+
+  //--------- Setup Parameter ---------//
+  var sheetid = "google id";
+  var notifyToken =  "Line token - using Line notify"//"Token Line ของเรา (มาจาก https://notify-bot.line.me/en/)";
+
+  var ssName = "#Sheet Name for Sheet that has data#";
+ 
+  // ------------------------------------//
+  
+  var ss = SpreadsheetApp.openById(sheetid).getSheetByName(ssName); // Identify Sheet
+  var msg;
+
+
+  // --------- Period Define ----------//
+  var now = new Date();
+  var yyyy = now.getFullYear().toString();
+  var mm = (now.getMonth()+1).toString();
+  var period =  yyyy + '-' + (mm[1]?mm:"0"+mm[0]);
+ 
+  ss.getRange('B2').setValue(period);
+
+
+  // --------- Your Message Go here --------//
+  msg = "[เบี้ยเลี้ยง] รวมยอดเบี้ยเลี้ยงประจำงวดการทำงาน" + "\n\n" + 
+        "งวดการทำงาน : " + period + "\n" + 
+        "รวมยอดเป็น = " + formatDollar(ss.getRange('B4').getValue()) + "\n\n";
+
+  // ------------------------------------//
+
+
+  // --------- Sending Message and Chart to LineNotify --------//
+   msg = {
+    message: msg,
+    //imageFile: chart
+  }
+  sendLineNotify(msg, notifyToken);
+}
+
+//######################################################################################################################
+
+function sendLineNotify(messages, accessToken) {
+  const lineNotifyEndPoint = "https://notify-api.line.me/api/notify";
+
+  const options = {
+    "headers": { "Authorization": "Bearer " + accessToken },
+    "method": 'post',
+    "payload": messages,
+  };
+
+  try {
+    UrlFetchApp.fetch(lineNotifyEndPoint, options);
+  } catch (error) {
+    Logger.log(error.name + "：" + error.message);
+    return;
+  }
+}
+
+
+function formatDollar(num) {
+    var p = num.toFixed(2).split(".");
+    return "฿" + p[0].split("").reverse().reduce(function(acc, num, i, orig) {
+        return  num=="-" ? acc : num + (i && !(i % 3) ? "," : "") + acc;
+    }, "") + "." + p[1];
+}
